@@ -4,6 +4,8 @@ package com.att.tdp.popcorn_palace.models;
 
 import jakarta.persistence.*;
 
+import java.util.List;
+
 
 @Entity
 @Table(name = "movies")  // Ensure this points to the correct table
@@ -17,7 +19,6 @@ public class Movie {
     private double rating;
     private int release_year;
 
-    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -65,4 +66,5 @@ public class Movie {
     public void setRelease_year(int release_year) {
         this.release_year = release_year;
     }
+
 }
