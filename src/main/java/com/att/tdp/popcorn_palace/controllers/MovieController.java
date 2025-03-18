@@ -28,8 +28,21 @@ public class MovieController {
         return ResponseEntity.ok(savedMovie);
     }
 
+
+    @DeleteMapping("/delete/{movieTitle}")
+    public ResponseEntity<Void> deleteMovie(@PathVariable String movieTitle) {
+        Movie movie = movieRepository.findByTitle(movieTitle);
+
+        if (movie != null) {
+            movieRepository.delete(movie);
+            return ResponseEntity.ok().build();
+        }
+
+        // If the movie with the given title doesn't exist, return 404
+        return ResponseEntity.notFound().build();
+    }
     @PostMapping("/update/{movieTitle}")
-    public ResponseEntity<Movie> updateMovie(@PathVariable String movieTitle, @RequestBody Movie updatedMovie) {
+    public ResponseEntity<Void> updateMovie(@PathVariable String movieTitle, @RequestBody Movie updatedMovie) {
         Movie movie = movieRepository.findByTitle(movieTitle);
 
         if (movie != null) {
