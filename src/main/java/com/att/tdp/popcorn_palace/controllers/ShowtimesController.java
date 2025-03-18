@@ -71,6 +71,45 @@ public class ShowtimesController {
         Showtime savedShowtime = showtimeRepository.save(showtime);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedShowtime);
     }
+
+    @PostMapping("/update/{showtimeId}")
+    public ResponseEntity<?> updateMovie(@PathVariable Long showtimeId, @RequestBody Showtime updatedshowtime) {
+        Optional<Showtime> showtime = showtimeRepository.findById(showtimeId);
+        if (!showtime.isPresent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("showtime with ID " + showtimeId + " not found.");
+        }
+
+        boolean isTimeUpdated = !updatedshowtime.getStartTime().equals(showtime.get().getStartTime()) ||
+                !updatedshowtime.getEndTime().equals(showtime.get().getEndTime());
+        if (isTimeUpdated) {
+            if (hasOverlappingShowtime(updatedshowtime.getTheater(), updatedshowtime.getStartTime(), updatedshowtime.getEndTime())) {
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Overlapping showtime found for the same theater.");
+            }
+        }
+        showtime.get().setMovieId(updatedshowtime.getMovieId());
+        showtime.get().setEndTime(updatedshowtime.getEndTime());
+        showtime.get().setPrice(updatedshowtime.getPrice());
+        showtime.get().setTheater(updatedshowtime.getTheater());
+        showtime.get().setStartTime(updatedshowtime.getStartTime());
+        Showtime savedShowtime = showtimeRepository.save(showtime.get());
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/delete/{showtimeId}")
+    public ResponseEntity<?> deleteMovie(@PathVariable Long showtimeId) {
+        Optional<Showtime> showtime = showtimeRepository.findById(showtimeId);
+        if (!showtime.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("showtime with ID " + showtimeId + " not found.");
+        }
+
+        showtimeRepository.delete(showtime.get());
+        return ResponseEntity.ok().build();
+
+    }
 }
 
 
