@@ -10,3 +10,13 @@ CREATE TABLE IF NOT EXISTS movies (
     rating DECIMAL(3, 1),
     release_year INT
 );
+
+CREATE TABLE IF NOT EXISTS showtimes (
+    id BIGSERIAL PRIMARY KEY,
+    price DECIMAL(5, 2),
+    movie_id BIGINT REFERENCES movies(id) ON DELETE CASCADE,
+    theater VARCHAR(255),
+    start_time TIMESTAMP,
+    end_time TIMESTAMP
+);
+
