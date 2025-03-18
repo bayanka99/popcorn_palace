@@ -27,4 +27,28 @@ public class MovieController {
         Movie savedMovie = movieRepository.save(movie);
         return ResponseEntity.ok(savedMovie);
     }
-}
+
+    @PostMapping("/update/{movieTitle}")
+    public ResponseEntity<Movie> updateMovie(@PathVariable String movieTitle, @RequestBody Movie updatedMovie) {
+        Movie movie = movieRepository.findByTitle(movieTitle);
+
+        if (movie != null) {
+            // Update the movie details
+            movie.setTitle(updatedMovie.getTitle());
+            movie.setGenre(updatedMovie.getGenre());
+            movie.setDuration(updatedMovie.getDuration());
+            movie.setRating(updatedMovie.getRating());
+            movie.setRelease_year(updatedMovie.getRelease_year());
+
+            // Save the updated movie to the database
+            movieRepository.save(movie);
+
+            // Return the updated movie with a 200 OK response
+            return ResponseEntity.ok().build();
+        }
+
+        // If the movie with the given title doesn't exist, return 404
+        return ResponseEntity.notFound().build();
+    }
+    }
+
