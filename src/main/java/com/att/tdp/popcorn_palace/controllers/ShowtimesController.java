@@ -6,7 +6,6 @@ import com.att.tdp.popcorn_palace.models.Showtime;
 import com.att.tdp.popcorn_palace.repositories.MovieRepository;
 import com.att.tdp.popcorn_palace.repositories.ShowtimeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,33 +24,45 @@ public class ShowtimesController {
 
     // Get showtime by id
     @GetMapping("/{showtimeId}")
-    public ResponseEntity<?> getShowtimeById(@PathVariable Long showtimeId) {
-        Optional<Showtime> showtime = showtimeRepository.findById(showtimeId);
-        if (showtime.isPresent()) {
-            return ResponseEntity.ok(showtime.get());
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("no Showtime exists with the provided id."); // 404 Not Found if showtime doesn't exist
+    public ResponseEntity<?> getShowtimeById(@PathVariable String showtimeId) {
+
+        try {
+            Long id = Long.parseLong(showtimeId);
+            Optional<Showtime> showtime = showtimeRepository.findById(id);
+            if (showtime.isPresent()) {
+                return ResponseEntity.ok(showtime.get());
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("No Showtime exists with the provided ID.");
+            }
+        } catch (NumberFormatException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("The provided showtime ID is not a valid number.");
         }
     }
-//
-//    // Add a new movie
+
 // Method to check for overlapping showtimes in the same theater
-    private boolean hasOverlappingShowtime(String theater, LocalDateTime startTime, LocalDateTime endTime) {
+    private boolean hasOverlappingShowtime(Long showtime_id, String theater, LocalDateTime startTime, LocalDateTime endTime) {
         List<Showtime> existingShowtimes = showtimeRepository
                 .findByTheaterAndStartTimeBeforeAndEndTimeAfter(theater,endTime, startTime);
 
+        if (existingShowtimes.size()==1)
+        {
+            if (existingShowtimes.get(0).getId()==showtime_id){
+                return false;
+                }
+        }
         return !existingShowtimes.isEmpty(); // If there are existing showtimes, it means there's an overlap
     }
 
     // Method to add a new showtime
     @PostMapping
     public ResponseEntity<?> addShowtime(@RequestBody Showtime showtime) {
-
-        // Ensure that the movieId is not null in the request body
-        if (showtime.getMovieId() == null) {
+        String error_input=validate_input(showtime);
+        if (error_input!="")
+        {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Movie ID must be provided.");
+                    .body(error_input);
         }
 
         // Check if the movie exists in the database
@@ -62,7 +73,7 @@ public class ShowtimesController {
         }
 
         // Check for overlapping showtimes in the same theater
-        if (hasOverlappingShowtime(showtime.getTheater(), showtime.getStartTime(), showtime.getEndTime())) {
+        if (hasOverlappingShowtime(showtime.getId(),showtime.getTheater(), showtime.getStartTime(), showtime.getEndTime())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Overlapping showtime found for the same theater.");
         }
@@ -73,8 +84,24 @@ public class ShowtimesController {
     }
 
     @PostMapping("/update/{showtimeId}")
-    public ResponseEntity<?> updateMovie(@PathVariable Long showtimeId, @RequestBody Showtime updatedshowtime) {
-        Optional<Showtime> showtime = showtimeRepository.findById(showtimeId);
+    public ResponseEntity<?> updateMovie(@PathVariable String showtimeId, @RequestBody Showtime updatedshowtime) {
+        String error_input=validate_input(updatedshowtime);
+        if (error_input!="")
+        {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(error_input);
+        }
+
+        try {
+            Long id = Long.parseLong(showtimeId);
+
+            }
+         catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("The provided showtime ID is not a valid number.");
+        }
+
+        Optional<Showtime> showtime = showtimeRepository.findById(Long.parseLong(showtimeId));
         if (!showtime.isPresent()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("showtime with ID " + showtimeId + " not found.");
@@ -83,7 +110,7 @@ public class ShowtimesController {
         boolean isTimeUpdated = !updatedshowtime.getStartTime().equals(showtime.get().getStartTime()) ||
                 !updatedshowtime.getEndTime().equals(showtime.get().getEndTime());
         if (isTimeUpdated) {
-            if (hasOverlappingShowtime(updatedshowtime.getTheater(), updatedshowtime.getStartTime(), updatedshowtime.getEndTime())) {
+            if (hasOverlappingShowtime(showtime.get().getId(), updatedshowtime.getTheater(), updatedshowtime.getStartTime(), updatedshowtime.getEndTime())) {
 
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("Overlapping showtime found for the same theater.");
@@ -99,8 +126,16 @@ public class ShowtimesController {
     }
 
     @DeleteMapping("/delete/{showtimeId}")
-    public ResponseEntity<?> deleteMovie(@PathVariable Long showtimeId) {
-        Optional<Showtime> showtime = showtimeRepository.findById(showtimeId);
+    public ResponseEntity<?> deleteMovie(@PathVariable String showtimeId) {
+        try {
+            Long id = Long.parseLong(showtimeId);
+
+        }
+        catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("The provided showtime ID is not a valid number.");
+        }
+        Optional<Showtime> showtime = showtimeRepository.findById(Long.parseLong(showtimeId));
         if (!showtime.isPresent()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("showtime with ID " + showtimeId + " not found.");
@@ -108,6 +143,28 @@ public class ShowtimesController {
 
         showtimeRepository.delete(showtime.get());
         return ResponseEntity.ok().build();
+
+    }
+
+
+    private String validate_input(Showtime showtime) {
+        //{ "movieId": 1, "price":20.2, "theater": "Sample Theater", "startTime": "2025-02-14T11:47:46.125405Z", "endTime": "2025-02-14T14:47:46.125405Z" }
+        if (showtime.getMovieId() == null || showtime.getMovieId()<0 ) {
+            return "please enter a valid Movie ID.";
+        }
+        if (showtime.getPrice()<0)
+        {
+            return "please enter a valid Price Value.";
+        }
+
+        if (showtime.getTheater() == null || showtime.getTheater().trim().isEmpty())
+        {
+            return "please enter a valid theater.";
+        }
+        if (showtime.getStartTime().isAfter(showtime.getEndTime())) {
+            return "Start time must be before end time.";
+        }
+        return "";
 
     }
 }
