@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
     @Query("SELECT s FROM Showtime s WHERE s.theater = :theater " +
-            "AND s.startTime <= :endTime AND s.endTime >= :startTime")
+            "AND s.startTime < :endTime AND s.endTime > :startTime")
     List<Showtime> findByTheaterAndStartTimeBeforeAndEndTimeAfter(
             String theater, LocalDateTime endTime, LocalDateTime startTime);
 

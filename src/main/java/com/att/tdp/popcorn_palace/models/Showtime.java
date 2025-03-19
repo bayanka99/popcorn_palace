@@ -24,6 +24,17 @@ public class Showtime {
 
     private LocalDateTime endTime;
 
+
+    public Showtime() {
+    }
+    public Showtime(Double price, Long movieId, String theater, LocalDateTime startTime, LocalDateTime endTime) {
+        this.price = price;
+        this.movieId = movieId;
+        this.theater = theater;
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
+
     // Getters and Setters
     public Long getId() {
         return id;
