@@ -43,20 +43,6 @@ public class TicketBookingController {
         if (booking.size() != 3) {
             return "The input JSON should contain exactly 3 fields: showtimeId, seatNumber, and userId.";
         }
-
-//        if (!Pattern.matches("^[A-Za-z ]+$", booking.getGenre()) || booking.getGenre() == null || booking.getGenre().trim().isEmpty())
-//        {
-//            return "please enter a valid Genre.";
-//        }
-//        if (booking.getTitle() == null || booking.getTitle().trim().isEmpty())
-//        {
-//            return "please enter a valid title.";
-//        }
-//        if (booking.getRating() <0 || booking.getRating() >10 )
-//        {
-//            return "please enter a valid rating between 0 and 10.";
-//        }
-
         return "";
 
     }

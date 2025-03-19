@@ -5,12 +5,15 @@ import com.att.tdp.popcorn_palace.models.Movie;
 import com.att.tdp.popcorn_palace.models.Showtime;
 import com.att.tdp.popcorn_palace.repositories.MovieRepository;
 import com.att.tdp.popcorn_palace.repositories.ShowtimeRepository;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,7 +60,7 @@ public class ShowtimesController {
 
     // Method to add a new showtime
     @PostMapping
-    public ResponseEntity<?> addShowtime(@RequestBody Showtime showtime) {
+    public ResponseEntity<?> addShowtime(@RequestBody JsonNode showtime) {
         String error_input=validate_input(showtime);
         if (error_input!="")
         {
@@ -66,25 +69,35 @@ public class ShowtimesController {
         }
 
         // Check if the movie exists in the database
-        Optional<Movie> movieOptional = movieRepository.findById(showtime.getMovieId());
+        Optional<Movie> movieOptional = movieRepository.findById(showtime.path("movieId").asLong());
         if (!movieOptional.isPresent()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Movie with ID " + showtime.getMovieId() + " not found.");
+                    .body("Movie with ID " + showtime.path("movieId").asLong() + " not found.");
         }
+        Long movieId = showtime.path("movieId").asLong();
+        Double price = showtime.path("price").asDouble();
+        String theater = showtime.path("theater").asText();
+        LocalDateTime startTime = LocalDateTime.parse(showtime.path("startTime").asText(), DateTimeFormatter.ISO_DATE_TIME);
+
+        LocalDateTime endTime = LocalDateTime.parse(showtime.path("endTime").asText(), DateTimeFormatter.ISO_DATE_TIME);
+
+
 
         // Check for overlapping showtimes in the same theater
-        if (hasOverlappingShowtime(showtime.getId(),showtime.getTheater(), showtime.getStartTime(), showtime.getEndTime())) {
+        if (hasOverlappingShowtime(null,theater, startTime, endTime)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Overlapping showtime found for the same theater.");
         }
 
+
+
         // Save the showtime if no overlap is found
-        Showtime savedShowtime = showtimeRepository.save(showtime);
+        Showtime savedShowtime = showtimeRepository.save(new Showtime(price,movieId,theater,startTime,endTime));
         return ResponseEntity.status(HttpStatus.CREATED).body(savedShowtime);
     }
 
     @PostMapping("/update/{showtimeId}")
-    public ResponseEntity<?> updateMovie(@PathVariable String showtimeId, @RequestBody Showtime updatedshowtime) {
+    public ResponseEntity<?> updateMovie(@PathVariable String showtimeId, @RequestBody JsonNode updatedshowtime) {
         String error_input=validate_input(updatedshowtime);
         if (error_input!="")
         {
@@ -101,26 +114,33 @@ public class ShowtimesController {
                     .body("The provided showtime ID is not a valid number.");
         }
 
-        Optional<Showtime> showtime = showtimeRepository.findById(Long.parseLong(showtimeId));
+            Optional<Showtime> showtime = showtimeRepository.findById(Long.parseLong(showtimeId));
         if (!showtime.isPresent()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("showtime with ID " + showtimeId + " not found.");
         }
 
-        boolean isTimeUpdated = !updatedshowtime.getStartTime().equals(showtime.get().getStartTime()) ||
-                !updatedshowtime.getEndTime().equals(showtime.get().getEndTime());
+        Long movieId = updatedshowtime.path("movieId").asLong();
+        Double price = updatedshowtime.path("price").asDouble();
+        String theater = updatedshowtime.path("theater").asText();
+
+        LocalDateTime startTime = LocalDateTime.parse(updatedshowtime.path("startTime").asText(), DateTimeFormatter.ISO_DATE_TIME);
+
+        LocalDateTime endTime = LocalDateTime.parse(updatedshowtime.path("endTime").asText(), DateTimeFormatter.ISO_DATE_TIME);
+        boolean isTimeUpdated = !startTime.equals(showtime.get().getStartTime()) ||
+                !endTime.equals(showtime.get().getEndTime());
         if (isTimeUpdated) {
-            if (hasOverlappingShowtime(showtime.get().getId(), updatedshowtime.getTheater(), updatedshowtime.getStartTime(), updatedshowtime.getEndTime())) {
+            if (hasOverlappingShowtime(showtime.get().getId(), theater, startTime, endTime)) {
 
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("Overlapping showtime found for the same theater.");
             }
         }
-        showtime.get().setMovieId(updatedshowtime.getMovieId());
-        showtime.get().setEndTime(updatedshowtime.getEndTime());
-        showtime.get().setPrice(updatedshowtime.getPrice());
-        showtime.get().setTheater(updatedshowtime.getTheater());
-        showtime.get().setStartTime(updatedshowtime.getStartTime());
+        showtime.get().setMovieId(movieId);
+        showtime.get().setEndTime(endTime);
+        showtime.get().setPrice(price);
+        showtime.get().setTheater(theater);
+        showtime.get().setStartTime(startTime);
         Showtime savedShowtime = showtimeRepository.save(showtime.get());
         return ResponseEntity.ok().build();
     }
@@ -147,22 +167,47 @@ public class ShowtimesController {
     }
 
 
-    private String validate_input(Showtime showtime) {
+    private String validate_input(JsonNode showtime) {
         //{ "movieId": 1, "price":20.2, "theater": "Sample Theater", "startTime": "2025-02-14T11:47:46.125405Z", "endTime": "2025-02-14T14:47:46.125405Z" }
-        if (showtime.getMovieId() == null || showtime.getMovieId()<0 ) {
-            return "please enter a valid Movie ID.";
+        if (showtime.size() != 5) {
+            return "The input JSON should contain exactly 5 fields: movieId, price, theater, startTime, and endTime.";
         }
-        if (showtime.getPrice()<0)
-        {
-            return "please enter a valid Price Value.";
+        if (showtime.path("movieId").isMissingNode() || showtime.path("movieId").isDouble() || showtime.path("movieId").asLong() <= 0) {
+            return "Please enter a valid movieId value.";
         }
 
-        if (showtime.getTheater() == null || showtime.getTheater().trim().isEmpty())
-        {
-            return "please enter a valid theater.";
+        if (showtime.path("price").isMissingNode() || showtime.path("price").asLong() <= 0) {
+            return "Please enter a valid price value.";
         }
-        if (showtime.getStartTime().isAfter(showtime.getEndTime())) {
-            return "Start time must be before end time.";
+
+        if (showtime.path("theater").isMissingNode() || showtime.path("theater").asText().trim().isEmpty()) {
+            return "Please enter a valid theater.";
+        }
+
+        if (showtime.path("startTime").isMissingNode() || !showtime.path("startTime").isTextual()) {
+            return "Please enter a valid startTime.";
+        }
+        try {
+            DateTimeFormatter.ISO_DATE_TIME.parse(showtime.path("startTime").asText());
+        } catch (DateTimeParseException e) {
+            return "startTime should be a valid date-time string , example: 2025-02-14T14:58:46Z.";
+        }
+
+        // Validate endTime (should be a valid date-time string)
+        if (showtime.path("endTime").isMissingNode() || !showtime.path("endTime").isTextual()) {
+            return "Please enter a valid endTime.";
+        }
+        try {
+            DateTimeFormatter.ISO_DATE_TIME.parse(showtime.path("endTime").asText());
+        } catch (DateTimeParseException e) {
+            return "endTime should be a valid date-time string , example: 2025-02-14T14:58:46Z.";
+        }
+        LocalDateTime startTime = LocalDateTime.parse(showtime.path("startTime").asText(), DateTimeFormatter.ISO_DATE_TIME);
+        LocalDateTime endTime = LocalDateTime.parse(showtime.path("endTime").asText(), DateTimeFormatter.ISO_DATE_TIME);
+
+
+        if (startTime.isAfter(endTime) || startTime.isEqual(endTime)) {
+            return "End time must be greater than start time.";
         }
         return "";
 
