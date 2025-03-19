@@ -20,3 +20,11 @@ CREATE TABLE IF NOT EXISTS showtimes (
     end_time TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS bookings (
+    booking_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    showtime_id BIGINT REFERENCES showtimes(id) ON DELETE CASCADE,
+    seat_number INT NOT NULL,
+    user_id UUID NOT NULL
+);
+
+
