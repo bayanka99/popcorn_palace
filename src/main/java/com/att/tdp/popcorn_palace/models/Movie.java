@@ -19,6 +19,15 @@ public class Movie {
     private double rating;
     private int release_year;
 
+    public Movie(){}
+    public Movie(String title, String genre, int duration, double rating, int releaseYear) {
+        this.title = title;
+        this.genre = genre;
+        this.duration = duration;
+        this.rating = rating;
+        this.release_year = releaseYear;
+    }
+
     public Long getId() {
         return id;
     }
