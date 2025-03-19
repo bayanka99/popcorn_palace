@@ -18,7 +18,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-import org.springframework.http.HttpStatus;
+
 
 import java.util.List;
 
@@ -34,8 +34,7 @@ public class MovieControllerTest {
     @MockBean
     private MovieRepository movieRepository;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+
 
     private Movie validMovie;
 
