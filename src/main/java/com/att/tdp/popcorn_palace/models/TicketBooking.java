@@ -10,11 +10,11 @@ public class TicketBooking {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id")
+    @Column(name = "booking_id")
     private UUID bookingId;
 
     @Column(name = "showtime_id")
-    private int showtimeId;
+    private Long showtimeId;
 
     @Column(name = "seat_number")
     private int seatNumber;
@@ -25,7 +25,7 @@ public class TicketBooking {
     public TicketBooking() {
     }
 
-    public TicketBooking(int showtimeId, int seatNumber, String userId) {
+    public TicketBooking(Long showtimeId, int seatNumber, String userId) {
         this.showtimeId = showtimeId;
         this.seatNumber = seatNumber;
         this.userId = userId;
@@ -39,11 +39,11 @@ public class TicketBooking {
         this.bookingId = bookingId;
     }
 
-    public int getShowtimeId() {
+    public Long getShowtimeId() {
         return showtimeId;
     }
 
-    public void setShowtimeId(int showtimeId) {
+    public void setShowtimeId(Long showtimeId) {
         this.showtimeId = showtimeId;
     }
 
