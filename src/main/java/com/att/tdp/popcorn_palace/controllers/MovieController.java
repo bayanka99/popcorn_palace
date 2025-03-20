@@ -57,7 +57,7 @@ public class MovieController {
             return "Please enter a valid title.";
         }
 
-        if (movie.path("genre").isMissingNode() || !Pattern.matches("^[A-Za-z ]+$", movie.path("genre").asText())) {
+        if (movie.path("genre").isMissingNode() || !Pattern.matches("^[A-Za-z\\s-]+$", movie.path("genre").asText())) {
             return "Please enter a valid genre.";
         }
 
@@ -99,7 +99,7 @@ public class MovieController {
             return ResponseEntity.ok().build();
         }
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("no movie exists with the provided title ");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("no movie exists with the provided title");
     }
     @PostMapping("/update/{movieTitle}")
     public ResponseEntity<?> updateMovie(@PathVariable String movieTitle, @RequestBody JsonNode updatedMovie) {
@@ -112,7 +112,7 @@ public class MovieController {
         Movie movie = movieRepository.findByTitle(movieTitle);
         if (movie==null)
         {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("no movie exists with the provided title ");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("no movie exists with the provided title");
         }
 
         if(!movieTitle.equals(updatedMovie.path("title").asText()) && movieRepository.existsByTitle(updatedMovie.path("title").asText()))

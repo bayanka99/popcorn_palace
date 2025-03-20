@@ -168,7 +168,7 @@ public class ShowtimesController {
 
 
     private String validate_input(JsonNode showtime) {
-        //{ "movieId": 1, "price":20.2, "theater": "Sample Theater", "startTime": "2025-02-14T11:47:46.125405Z", "endTime": "2025-02-14T14:47:46.125405Z" }
+
         if (showtime.size() != 5) {
             return "The input JSON should contain exactly 5 fields: movieId, price, theater, startTime, and endTime.";
         }

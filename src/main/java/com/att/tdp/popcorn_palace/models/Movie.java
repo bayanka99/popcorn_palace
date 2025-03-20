@@ -4,7 +4,7 @@ package com.att.tdp.popcorn_palace.models;
 
 import jakarta.persistence.*;
 
-import java.util.List;
+
 
 
 @Entity

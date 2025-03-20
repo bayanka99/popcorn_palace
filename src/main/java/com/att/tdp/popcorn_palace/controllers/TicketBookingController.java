@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Optional;
-import java.util.regex.Pattern;
+
 
 @RestController
 @RequestMapping("/bookings")
@@ -29,7 +29,9 @@ public class TicketBookingController {
 
     private String validate_input(JsonNode booking) {
         //{ "showtimeId": 1, "seatNumber": 15 , userId:"84438967-f68f-4fa0-b620-0f08217e76af"}
-
+        if (booking.size() != 3) {
+            return "The input JSON should contain exactly 3 fields: showtimeId, seatNumber, and userId.";
+        }
         if (booking.path("showtimeId").isMissingNode() || booking.path("showtimeId").isDouble() || booking.path("showtimeId").asLong() <= 0) {
             return "Please enter a valid showtimeId value.";
         }
@@ -40,9 +42,7 @@ public class TicketBookingController {
         {
             return "Please enter a valid userId value.";
         }
-        if (booking.size() != 3) {
-            return "The input JSON should contain exactly 3 fields: showtimeId, seatNumber, and userId.";
-        }
+
         return "";
 
     }
