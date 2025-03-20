@@ -4,7 +4,6 @@ import com.att.tdp.popcorn_palace.controllers.MovieController;
 import com.att.tdp.popcorn_palace.models.Movie;
 import com.att.tdp.popcorn_palace.repositories.MovieRepository;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,8 +81,8 @@ public class MovieControllerTest {
     }
 
     @Test
-    public void testAddMovie_InvalidInput() throws Exception {
-        // Invalid movie data (missing required fields)
+    public void testAddMovie_InvalidInput_extra_fields() throws Exception {
+        // Invalid movie data (extra useless fields)
         String invalidMovieJson = "{ \"random_stuff\": \"random_val\",\"title\": \"\", \"genre\": \"\", \"duration\": -1, \"rating\": -1, \"releaseYear\": -2025 }";
 
         mockMvc.perform(post("/movies")
@@ -97,8 +96,79 @@ public class MovieControllerTest {
     }
 
     @Test
-    public void testAddMovie_MissingTitle() throws Exception {
-        // Invalid movie data (missing title)
+    public void testAddMovie_InvalidInput_missing_title_field() throws Exception {
+        // Invalid movie data (missing title field)
+        String invalidMovieJson = "{ \"random_key\": \"random_val\", \"genre\": \"\", \"duration\": -1, \"rating\": -1, \"releaseYear\": -2025 }";
+
+        mockMvc.perform(post("/movies")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidMovieJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Please enter a valid title."));
+
+        verify(movieRepository, times(0)).existsByTitle(anyString());
+        verify(movieRepository, times(0)).save(any(Movie.class));
+    }
+    @Test
+    public void testAddMovie_InvalidInput_missing_genre_field() throws Exception {
+        // Invalid movie data (missing genre field)
+        String invalidMovieJson = "{ \"title\": \"random_val\", \"random_key_2\": \"random_val_2\", \"duration\": -1, \"rating\": -1, \"releaseYear\": -2025 }";
+
+        mockMvc.perform(post("/movies")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidMovieJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Please enter a valid genre."));
+
+        verify(movieRepository, times(0)).existsByTitle(anyString());
+        verify(movieRepository, times(0)).save(any(Movie.class));
+    }
+    @Test
+    public void testAddMovie_InvalidInput_missing_duration_field() throws Exception {
+        // Invalid movie data (missing duration field)
+        String invalidMovieJson = "{ \"title\": \"random_val\", \"genre\": \"random-val\", \"random_key\": \"random_val_2\", \"rating\": -1, \"releaseYear\": -2025 }";
+
+        mockMvc.perform(post("/movies")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidMovieJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Please enter a valid duration."));
+
+        verify(movieRepository, times(0)).existsByTitle(anyString());
+        verify(movieRepository, times(0)).save(any(Movie.class));
+    }
+    @Test
+    public void testAddMovie_InvalidInput_missing_rating_field() throws Exception {
+        // Invalid movie data (missing rating field)
+        String invalidMovieJson = "{ \"title\": \"random_val\", \"genre\": \"random-val\", \"duration\": 50, \"random_key\": \"random_val\", \"releaseYear\": -2025 }";
+
+        mockMvc.perform(post("/movies")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidMovieJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Please enter a valid rating between 0 and 10."));
+
+        verify(movieRepository, times(0)).existsByTitle(anyString());
+        verify(movieRepository, times(0)).save(any(Movie.class));
+    }
+    @Test
+    public void testAddMovie_InvalidInput_missing_releaseYear_field() throws Exception {
+        // Invalid movie data (missing releaseYear field)
+        String invalidMovieJson = "{ \"title\": \"random_val\", \"genre\": \"random-val\", \"duration\": 50, \"rating\": 9.8, \"random_key\": \"random_val\" }";
+
+        mockMvc.perform(post("/movies")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidMovieJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Please enter a valid release year."));
+
+        verify(movieRepository, times(0)).existsByTitle(anyString());
+        verify(movieRepository, times(0)).save(any(Movie.class));
+    }
+
+    @Test
+    public void testAddMovie_InvalidInput_invalid_title_value() throws Exception {
+        // Invalid movie data (invalid title value)
         String missingTitleJson = "{ \"title\": \"\",\"genre\": \"Action\", \"duration\": 120, \"rating\": 8.0, \"releaseYear\": 2021 }";
 
         mockMvc.perform(post("/movies")
@@ -112,8 +182,36 @@ public class MovieControllerTest {
     }
 
     @Test
-    public void testAddMovie_invalid_ratings() throws Exception {
-        // Invalid movie data (missing title)
+    public void testAddMovie_InvalidInput_invalid_genre_value() throws Exception {
+        // Invalid movie data (invalid genre value)
+        String missingTitleJson = "{ \"title\": \"good_title\",\"genre\": 59, \"duration\": 120, \"rating\": 8.0, \"releaseYear\": 2021 }";
+
+        mockMvc.perform(post("/movies")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(missingTitleJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Please enter a valid genre."));
+
+        verify(movieRepository, times(0)).existsByTitle(anyString());
+        verify(movieRepository, times(0)).save(any(Movie.class));
+    }
+    @Test
+    public void testAddMovie_InvalidInput_invalid_duration_value() throws Exception {
+        // Invalid movie data (invalid duration value)
+        String missingTitleJson = "{ \"title\": \"good_title\",\"genre\": \"Action\", \"duration\": -120, \"rating\": 8.0, \"releaseYear\": 2021 }";
+
+        mockMvc.perform(post("/movies")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(missingTitleJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Please enter a valid duration."));
+
+        verify(movieRepository, times(0)).existsByTitle(anyString());
+        verify(movieRepository, times(0)).save(any(Movie.class));
+    }
+    @Test
+    public void testAddMovie_InvalidInput_invalid_rating_value() throws Exception {
+        // Invalid movie data (invalid rating value)
         String missingTitleJson = "{ \"title\": \"good_title\",\"genre\": \"Action\", \"duration\": 120, \"rating\": -8.0, \"releaseYear\": 2021 }";
 
         mockMvc.perform(post("/movies")
@@ -125,6 +223,23 @@ public class MovieControllerTest {
         verify(movieRepository, times(0)).existsByTitle(anyString());
         verify(movieRepository, times(0)).save(any(Movie.class));
     }
+    @Test
+    public void testAddMovie_InvalidInput_invalid_releaseYear_value() throws Exception {
+        // Invalid movie data (invalid releaseYear value)
+        String missingTitleJson = "{ \"title\": \"good_title\",\"genre\": \"Action\", \"duration\": 120, \"rating\": 8.0, \"releaseYear\": -2021 }";
+
+        mockMvc.perform(post("/movies")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(missingTitleJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Please enter a valid release year."));
+
+        verify(movieRepository, times(0)).existsByTitle(anyString());
+        verify(movieRepository, times(0)).save(any(Movie.class));
+    }
+
+
+
 
 
 
@@ -208,7 +323,6 @@ public class MovieControllerTest {
 
         // Mock repository behavior
         when(movieRepository.findByTitle("Inception")).thenReturn(validMovie);
-        when(movieRepository.existsByTitle("Inception")).thenReturn(true);
         when(movieRepository.existsByTitle("The Matrix")).thenReturn(true);
 
         mockMvc.perform(post("/movies/update/{movieTitle}", "Inception")
@@ -216,7 +330,9 @@ public class MovieControllerTest {
                         .content(updatedMovieJson))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("a movie with the same title already exists. Please provide a different title."));
-
+        verify(movieRepository, times(1)).findByTitle(validMovie.getTitle());
+        verify(movieRepository, times(1)).existsByTitle("The Matrix");
+        verify(movieRepository, times(0)).save(any(Movie.class));
 
     }
 
