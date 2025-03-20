@@ -264,7 +264,7 @@ public class MovieControllerTest {
     public void testDeleteMovie_Success() throws Exception {
         when(movieRepository.findByTitle(validMovie.getTitle())).thenReturn(validMovie);
 
-        mockMvc.perform(delete("/movies/delete/{movieTitle}", validMovie.getTitle()))
+        mockMvc.perform(delete("/movies/{movieTitle}", validMovie.getTitle()))
                 .andExpect(status().isOk());
 
         verify(movieRepository, times(1)).findByTitle(validMovie.getTitle());
@@ -276,7 +276,7 @@ public class MovieControllerTest {
     public void testDeleteMovie_NotFound() throws Exception {
         when(movieRepository.findByTitle(validMovie.getTitle())).thenReturn(null);
 
-        mockMvc.perform(delete("/movies/delete/{movieTitle}", validMovie.getTitle()))
+        mockMvc.perform(delete("/movies/{movieTitle}", validMovie.getTitle()))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string("no movie exists with the provided title"));
 
