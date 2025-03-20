@@ -39,7 +39,7 @@ public class TicketBookingControllerTest {
 
     @BeforeEach
     void setUp() {
-        
+
         showtime = new Showtime();
         showtime.setId(1L);
         showtime.setTheater("Sample Theater");
