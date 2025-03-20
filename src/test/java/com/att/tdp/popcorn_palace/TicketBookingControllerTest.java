@@ -1,25 +1,17 @@
 package com.att.tdp.popcorn_palace;
 
-import com.att.tdp.popcorn_palace.controllers.ShowtimesController;
 import com.att.tdp.popcorn_palace.controllers.TicketBookingController;
 import com.att.tdp.popcorn_palace.models.Showtime;
 import com.att.tdp.popcorn_palace.models.TicketBooking;
 import com.att.tdp.popcorn_palace.repositories.ShowtimeRepository;
 import com.att.tdp.popcorn_palace.repositories.TicketBookingRepository;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -47,8 +39,7 @@ public class TicketBookingControllerTest {
 
     @BeforeEach
     void setUp() {
-
-        // Create a sample Showtime object
+        
         showtime = new Showtime();
         showtime.setId(1L);
         showtime.setTheater("Sample Theater");
@@ -58,19 +49,13 @@ public class TicketBookingControllerTest {
 
     @Test
     void bookTicket_Success() throws Exception {
-        // Setup mock response for showtime lookup
         when(showtimeRepository.findById(1L)).thenReturn(Optional.of(showtime));
         when(ticketBookingRepository.existsByShowtimeIdAndSeatNumber(1L, 15)).thenReturn(false);
 
         TicketBooking savedBooking = new TicketBooking(1l, 15, "84438967-f68f-4fa0-b620-0f08217e76af");
         savedBooking.setBookingId(UUID.randomUUID());
         when(ticketBookingRepository.save(any(TicketBooking.class))).thenReturn(savedBooking);
-
-        // Sample booking request body
         String bookingRequest = "{ \"showtimeId\": 1, \"seatNumber\": 15, \"userId\": \"84438967-f68f-4fa0-b620-0f08217e76af\" }";
-        // Sample booking request body
-
-        // Perform the POST request
         mockMvc.perform(post("/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bookingRequest))
@@ -81,13 +66,8 @@ public class TicketBookingControllerTest {
 
     @Test
     void bookTicket_ShowtimeNotFound() throws Exception {
-        // Setup mock response for showtime lookup
         when(showtimeRepository.findById(1L)).thenReturn(Optional.empty());
-
-        // Sample booking request body
         String bookingRequest = "{ \"showtimeId\": 1, \"seatNumber\": 15, \"userId\": \"84438967-f68f-4fa0-b620-0f08217e76af\" }";
-
-        // Perform the POST request
         mockMvc.perform(post("/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bookingRequest))
@@ -97,14 +77,9 @@ public class TicketBookingControllerTest {
 
     @Test
     void bookTicket_SeatAlreadyBooked() throws Exception {
-        // Setup mock response for showtime lookup
         when(showtimeRepository.findById(1L)).thenReturn(Optional.of(showtime));
         when(ticketBookingRepository.existsByShowtimeIdAndSeatNumber(1L, 15)).thenReturn(true);
-
-        // Sample booking request body
         String bookingRequest = "{ \"showtimeId\": 1, \"seatNumber\": 15, \"userId\": \"84438967-f68f-4fa0-b620-0f08217e76af\" }";
-
-        // Perform the POST request
         mockMvc.perform(post("/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bookingRequest))
@@ -113,28 +88,95 @@ public class TicketBookingControllerTest {
     }
 
     @Test
-    void bookTicket_InvalidInput() throws Exception {
-        // Invalid booking request (missing userId)
-        String bookingRequest = "{ \"showtimeId\": 1, \"seatNumber\": 15 , \"random_key\": \"random_val\"}";
-
-        // Perform the POST request
-        mockMvc.perform(post("/bookings")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(bookingRequest))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(("Please enter a valid userId value.")));
-    }
-
-    @Test
-    void bookTicket_MissingFields() throws Exception {
-        // Missing seat number and showtimeId
-        String bookingRequest = "{ \"userId\": \"84438967-f68f-4fa0-b620-0f08217e76af\" }";
-
-        // Perform the POST request
+    void bookTicket_Invalid_Input_missing_keys() throws Exception {
+        String bookingRequest = "{ \"showtimeId\": 1, \"seatNumber\": 15 }";
         mockMvc.perform(post("/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bookingRequest))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(("The input JSON should contain exactly 3 fields: showtimeId, seatNumber, and userId.")));
     }
+    @Test
+    void bookTicket_Invalid_Input_extra_keys() throws Exception {
+
+        String bookingRequest = "{ \"showtimeId\": 1, \"seatNumber\": 15 , \"random_key\": \"random_val\",\"random_key_2\": \"random_val_2\"}";
+        mockMvc.perform(post("/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bookingRequest))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(("The input JSON should contain exactly 3 fields: showtimeId, seatNumber, and userId.")));
+    }
+
+
+    @Test
+    void bookTicket_Invalid_Input_missing_user_id() throws Exception {
+        // missing user id
+        String bookingRequest = "{ \"showtimeId\": 1, \"seatNumber\": 15,\"random_key\": \"random_val\" }";
+        mockMvc.perform(post("/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bookingRequest))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(("Please enter a valid userId value.")));
+    }
+    @Test
+    void bookTicket_Invalid_Input_missing_seatNumber() throws Exception {
+        // missing user seatNumber
+        String bookingRequest = "{ \"showtimeId\": 1, \"random_key\": \"random_val\",\"userId\": \"84438967-f68f-4fa0-b620-0f08217e76af\" }";
+        mockMvc.perform(post("/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bookingRequest))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(("Please enter a valid seatNumber value.")));
+    }
+    @Test
+    void bookTicket_Invalid_Input_missing_showtimeid() throws Exception {
+        // missing user showtimeid
+        String bookingRequest = "{ \"seatNumber\": 1, \"random_key\": \"random_val\",\"userId\": \"84438967-f68f-4fa0-b620-0f08217e76af\" }";
+        mockMvc.perform(post("/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bookingRequest))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(("Please enter a valid showtimeId value.")));
+    }
+    @Test
+    void bookTicket_InvalidShowtimeId_1() throws Exception {
+        String bookingRequest = "{ \"showtimeId\": -1, \"seatNumber\": 15, \"userId\": \"84438967-f68f-4fa0-b620-0f08217e76af\" }";
+
+        mockMvc.perform(post("/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bookingRequest))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Please enter a valid showtimeId value."));
+    }
+    @Test
+    void bookTicket_InvalidShowtimeId_2() throws Exception {
+        String bookingRequest = "{ \"showtimeId\": 1.5, \"seatNumber\": 15, \"userId\": \"84438967-f68f-4fa0-b620-0f08217e76af\" }";
+
+        mockMvc.perform(post("/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bookingRequest))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Please enter a valid showtimeId value."));
+    }
+    @Test
+    void bookTicket_Invalid_seat_number_1() throws Exception {
+        String bookingRequest = "{ \"showtimeId\": 1, \"seatNumber\": 15.5, \"userId\": \"84438967-f68f-4fa0-b620-0f08217e76af\" }";
+
+        mockMvc.perform(post("/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bookingRequest))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Please enter a valid seatNumber value."));
+    }
+    @Test
+    void bookTicket_Invalid_seat_number_2() throws Exception {
+        String bookingRequest = "{ \"showtimeId\": 1, \"seatNumber\": -50, \"userId\": \"84438967-f68f-4fa0-b620-0f08217e76af\" }";
+
+        mockMvc.perform(post("/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bookingRequest))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Please enter a valid seatNumber value."));
+    }
+
 }
