@@ -28,7 +28,7 @@
    ```
 
 
-   This will spin up a PostgreSQL instance on the default port 5432. You can modify the connection details in the application.properties if needed.
+   This will spin up a PostgreSQL instance on the default port 5432. You can modify the connection details in the application.yaml if needed.
 
    you can access the database through the terminal using these commands:
    ```bash
