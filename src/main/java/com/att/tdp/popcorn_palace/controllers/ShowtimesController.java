@@ -145,7 +145,7 @@ public class ShowtimesController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/delete/{showtimeId}")
+    @DeleteMapping("/{showtimeId}")
     public ResponseEntity<?> deleteMovie(@PathVariable String showtimeId) {
         try {
             Long id = Long.parseLong(showtimeId);

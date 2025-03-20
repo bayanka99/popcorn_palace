@@ -88,7 +88,7 @@ public class MovieController {
     }
 
 
-    @DeleteMapping("/delete/{movieTitle}")
+    @DeleteMapping("/{movieTitle}")
     public ResponseEntity<?> deleteMovie(@PathVariable String movieTitle) {
 
 
